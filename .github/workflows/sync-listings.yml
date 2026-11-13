@@ -1,5 +1,9 @@
 name: Sync Taiwan House listings
 on:
+  push:
+    paths:
+      - "scripts/sync_listings.py"
+      - ".github/workflows/sync-listings.yml"
   workflow_dispatch:
   schedule:
     - cron: "17 */6 * * *"
