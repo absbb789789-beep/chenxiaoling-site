@@ -18,10 +18,10 @@ session = requests.Session()
 session.headers.update(HEADERS)
 
 def clean(s):
-    return re.sub(r"\\s+", " ", str(s or "")).strip()
+    return re.sub(r"\s+", " ", str(s or "")).strip()
 
 def money(text):
-    m = re.search(r"([0-9,]+(?:\\.[0-9]+)?)\\s*萬", text)
+    m = re.search(r"([0-9,]+(?:\.[0-9]+)?)\s*萬", text)
     return m.group(1).replace(",", "") if m else ""
 
 def extract_store(code, base):
@@ -59,7 +59,7 @@ def extract_store(code, base):
         for _ in range(4):
             if parent.parent: parent = parent.parent
         block = clean(parent.get_text(" ", strip=True))
-        if not re.search(r"\\d[\\d,.]*\\s*萬|總坪|建坪|地坪|房\\s*廳", block): continue
+        if not re.search(r"\d[\d,.]*\s*萬|總坪|建坪|地坪|房\s*廳", block): continue
         if not any(k in href.lower() for k in ("businessinfo", "property", "house", "detail", "item", "sale", "buy")) and href.rstrip("/") == base.rstrip("/"): continue
         image = ""
         img = parent.select_one("img")
@@ -79,8 +79,8 @@ def extract_store(code, base):
             "store": code, "title": title[:100], "url": url,
             "image": image if isinstance(image, str) and image.startswith(("http://","https://")) else "",
             "price": money(desc),
-            "area": (re.search(r"(?:總坪|建坪|地坪)\\s*[:：]?\\s*([0-9.]+)", desc).group(1) if re.search(r"(?:總坪|建坪|地坪)\\s*[:：]?\\s*([0-9.]+)", desc) else ""),
-            "layout": (re.search(r"([0-9]+\\s*房[^|｜]{0,18})", desc).group(1) if re.search(r"([0-9]+\\s*房[^|｜]{0,18})", desc) else ""),
+            "area": (re.search(r"(?:總坪|建坪|地坪)\s*[:：]?\s*([0-9.]+)", desc).group(1) if re.search(r"(?:總坪|建坪|地坪)\s*[:：]?\s*([0-9.]+)", desc) else ""),
+            "layout": (re.search(r"([0-9]+\s*房[^|｜]{0,18})", desc).group(1) if re.search(r"([0-9]+\s*房[^|｜]{0,18})", desc) else ""),
             "district": (re.search(r"台中市.{0,8}?(?:區|鄉|鎮)", desc).group(0) if re.search(r"台中市.{0,8}?(?:區|鄉|鎮)", desc) else ""),
         })
     return items
