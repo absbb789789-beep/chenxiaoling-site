@@ -95,9 +95,9 @@ def main():
         except Exception as e:
             errors.append(f"{code}: {type(e).__name__}: {e}")
             print(errors[-1], file=sys.stderr)
-    # Avoid overwriting a good feed with an empty/partial response.
-    if not all_items:
-        raise SystemExit("No listing records retrieved; previous JSON preserved. " + "; ".join(errors))
+    # Require all three storefronts to be fetched before publishing a feed.
+    if errors or not all_items:
+        raise SystemExit("Sync incomplete; previous JSON preserved. " + "; ".join(errors))
     # Deduplicate on canonical URL.
     unique = {x["url"]: x for x in all_items}
     OUT.parent.mkdir(parents=True, exist_ok=True)
