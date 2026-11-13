@@ -8,9 +8,9 @@ import requests
 from bs4 import BeautifulSoup
 
 STORES = {
-    "TBD9": "https://store.twhg.com.tw/TBD9",
-    "TB73": "https://store.twhg.com.tw/TB73",
-    "TB75": "https://store.twhg.com.tw/TB75",
+    "TBD9": "https://store.twhg.com.tw/house/TBD9",
+    "TB73": "https://store.twhg.com.tw/house/TB73",
+    "TB75": "https://store.twhg.com.tw/house/TB75",
 }
 OUT = Path("data/listings.json")
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; ChenXiaoLingPropertySite/1.0; +https://absbb789789-beep.github.io/chenxiaoling-site/)", "Accept-Language": "zh-TW,zh;q=0.9,en;q=0.8"}
