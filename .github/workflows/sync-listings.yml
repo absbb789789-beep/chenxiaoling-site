@@ -1,0 +1,29 @@
+name: Sync Taiwan House listings
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */6 * * *"
+permissions:
+  contents: write
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests beautifulsoup4
+      - name: Fetch public listings
+        run: python scripts/sync_listings.py
+      - name: Commit updated feed
+        run: |
+          if git diff --quiet -- data/listings.json; then
+            echo "No listing changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/listings.json
+          git commit -m "Auto-sync Taiwan House listings"
+          git push
