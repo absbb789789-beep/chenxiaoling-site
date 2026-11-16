@@ -151,7 +151,18 @@ def collect_store_ids(page, code, url):
         for href in page.locator("a[href*='/buy/']").evaluate_all("(els) => els.map(a => a.href)"):
             m = ID_RE.search(href or "")
             if m: ids.add(m.group(1))
-    if not ids: raise RuntimeError("未找到任何 /buy/<物件編號> 連結；可能頁面結構改變或內容未載入")
+    if not ids:
+        diagnostic = {
+            "page_url": page.url,
+            "page_title": page.title(),
+            "body_text": text_or_empty(page.locator("body").inner_text(timeout=10000))[:1800],
+            "anchors": page.locator("a[href]").evaluate_all(
+                "(els) => els.slice(0, 60).map(a => ({text: (a.innerText || a.getAttribute('aria-label') || '').trim().slice(0, 100), href: a.href}))"
+            ),
+            "iframes": page.locator("iframe").evaluate_all("(els) => els.map(x => x.src).slice(0, 15)"),
+            "scripts": page.locator("script[src]").evaluate_all("(els) => els.map(x => x.src).slice(0, 15)")
+        }
+        raise RuntimeError("未找到物件連結；頁面診斷=" + json.dumps(diagnostic, ensure_ascii=False)[:6000])
     return ids
 
 def compare(old_items, new_items, failed_stores):
