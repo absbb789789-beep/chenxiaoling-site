@@ -132,6 +132,25 @@ def collect_store_ids(page, code, url):
     for href in hrefs:
         m = ID_RE.search(href or "")
         if m: ids.add(m.group(1))
+    # Follow conventional next-page links when the full inventory is paginated.
+    visited = {page.url}
+    for _ in range(30):
+        next_href = page.locator("a[rel='next'], a[aria-label*='下一'], a[title*='下一']").evaluate_all(
+            "(els) => els.map(a => a.href).filter(Boolean)")
+        if not next_href:
+            next_href = page.locator("a[href]").evaluate_all(
+                "(els) => els.filter(a => /下一頁|下一页|next/i.test((a.innerText || '') + ' ' + (a.getAttribute('aria-label') || ''))).map(a => a.href)")
+        target = next((h for h in next_href if h not in visited), None)
+        if not target:
+            break
+        visited.add(target)
+        page.goto(target, wait_until="domcontentloaded", timeout=45000)
+        try: page.wait_for_load_state("networkidle", timeout=10000)
+        except PlaywrightTimeoutError: pass
+        page.wait_for_timeout(900)
+        for href in page.locator("a[href*='/buy/']").evaluate_all("(els) => els.map(a => a.href)"):
+            m = ID_RE.search(href or "")
+            if m: ids.add(m.group(1))
     if not ids: raise RuntimeError("未找到任何 /buy/<物件編號> 連結；可能頁面結構改變或內容未載入")
     return ids
 
