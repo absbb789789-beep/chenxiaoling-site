@@ -1,33 +1,57 @@
-name: Sync Taiwan House listings
+name: Weekly Taiwan House Listings Sync
+
 on:
-  push:
-    paths:
-      - "scripts/sync_listings.py"
-      - ".github/workflows/sync-listings.yml"
-  workflow_dispatch:
   schedule:
-    - cron: "17 */6 * * *"
+    # Every Monday 09:00 Asia/Taipei (UTC+8 = 01:00 UTC)
+    - cron: "0 1 * * 1"
+  workflow_dispatch:
+
 permissions:
   contents: write
+
+concurrency:
+  group: weekly-property-sync
+  cancel-in-progress: false
+
 jobs:
   sync:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout website
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install requests beautifulsoup4
-      - name: Fetch public listings
-        run: python scripts/sync_listings.py
-      - name: Commit updated feed
+          cache: pip
+
+      - name: Install dependencies
         run: |
-          if git diff --quiet -- data/listings.json; then
-            echo "No listing changes."
-            exit 0
-          fi
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          playwright install --with-deps chromium
+
+      - name: Run browser-based listing sync
+        run: python scripts/sync_listings.py
+
+      - name: Commit data, backups and report
+        if: success()
+        run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/listings.json
-          git commit -m "Auto-sync Taiwan House listings"
-          git push
+          git add data backups reports logs
+          if git diff --cached --quiet; then
+            echo "No data changes to commit."
+          else
+            git commit -m "Weekly property listings update"
+            git push
+          fi
+
+      - name: Record failed run
+        if: failure()
+        run: |
+          echo "Property synchronization failed. Existing published listings were not intentionally replaced." >> "$GITHUB_STEP_SUMMARY"
