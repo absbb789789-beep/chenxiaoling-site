@@ -1,6 +1,12 @@
 name: Weekly Taiwan House Listings Sync
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/**"
+      - ".github/workflows/sync-listings.yml"
+      - "requirements.txt"
   schedule:
     # Every Monday 09:00 Asia/Taipei (UTC+8 = 01:00 UTC)
     - cron: "0 1 * * 1"
